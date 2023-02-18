@@ -2,11 +2,14 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/fm2901/go-todo"
 	"github.com/fm2901/go-todo/pkg/handler"
 	"github.com/fm2901/go-todo/pkg/repository"
 	"github.com/fm2901/go-todo/pkg/service"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -15,7 +18,24 @@ func main() {
 		log.Fatalf("error: %s", err.Error())
 	}
 
-	repos := repository.NewRepository()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error: %s", err.Error())
+	}
+
+	db, err := repository.NewMysqlDB(repository.Config{
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
+		Username: viper.GetString("db.username"),
+		Password: os.Getenv("DB_PASSWORD"),
+		DBName:   viper.GetString("db.dbname"),
+		SSLMode:  viper.GetString("db.sslmode"),
+	})
+
+	if err != nil {
+		log.Fatalf("error: %s", err.Error())
+	}
+
+	repos := repository.NewRepository(db)
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(services)
 

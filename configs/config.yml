@@ -1,1 +1,9 @@
 port: "8000"
+
+db:
+  username: "root"
+  password: ""
+  host: "localhost"
+  port: "3306"
+  dbname: "todo"
+  sslmode: ""
