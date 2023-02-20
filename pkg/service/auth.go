@@ -21,6 +21,8 @@ type tokenClaims struct {
 	UserId int `json:"user_id"`
 }
 
+const salt = "fasfergwefgqd1231tgergweff3f"
+
 type AuthService struct {
 	repo repository.Authorization
 }
