@@ -6,7 +6,7 @@ import (
 )
 
 type Authorization interface {
-	CreateUser(todo.User) (int, error)
+	CreateUser(user todo.User) (int, error)
 }
 
 type TodoList interface {
@@ -23,6 +23,6 @@ type Service struct {
 
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
-		Authorization: NewAuthService(*repos.Authorization),
+		Authorization: NewAuthService(repos.Authorization),
 	}
 }
