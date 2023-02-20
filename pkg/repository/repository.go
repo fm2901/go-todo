@@ -1,8 +1,13 @@
 package repository
 
-import "github.com/jmoiron/sqlx"
+import (
+	"github.com/fm2901/go-todo"
+	"github.com/jmoiron/sqlx"
+)
 
 type Authorization interface {
+	CreateUser(user todo.User) (int, error)
+	GetUser(username, password string) (todo.User, error)
 }
 
 type TodoList interface {
