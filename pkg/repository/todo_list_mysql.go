@@ -5,7 +5,6 @@ import (
 
 	"github.com/fm2901/go-todo"
 	"github.com/jmoiron/sqlx"
-	"github.com/sirupsen/logrus"
 )
 
 type TodoListMysql struct {
@@ -53,8 +52,6 @@ func (r *TodoListMysql) GetAll(userId int) ([]todo.TodoList, error) {
 	var lists []todo.TodoList
 
 	query := fmt.Sprintf("SELECT tl.id, tl.title, tl.description FROM %s tl LEFT JOIN %s ul ON tl.id = ul.list_id WHERE ul.user_id=%d", todoListsTable, usersListsTable, userId)
-	//query := fmt.Sprintf("SELECT tl.id, tl.title, tl.description FROM %s tl", todoListsTable)
-	logrus.Println(query)
 	err := r.db.Select(&lists, query)
 
 	return lists, err
@@ -64,8 +61,14 @@ func (r *TodoListMysql) GetById(userId, listId int) (todo.TodoList, error) {
 	var list todo.TodoList
 
 	query := fmt.Sprintf("SELECT tl.id, tl.title, tl.description FROM %s tl LEFT JOIN %s ul ON tl.id = ul.list_id WHERE ul.user_id=%d and tl.id=%d", todoListsTable, usersListsTable, userId, listId)
-	logrus.Println(query)
 	err := r.db.Get(&list, query)
 
 	return list, err
+}
+
+func (r *TodoListMysql) Delete(userId, listId int) error {
+	query := fmt.Sprintf("DELETE FROM %s tl USING %s ul WHERE tl.id=ul.list_id and tl.id=%d and ul.user_id=%d", todoListsTable, usersListsTable, listId, userId)
+	_, err := r.db.Exec(query)
+
+	return err
 }
