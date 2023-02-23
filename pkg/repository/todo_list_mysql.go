@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fm2901/go-todo"
 	"github.com/jmoiron/sqlx"
@@ -67,8 +68,34 @@ func (r *TodoListMysql) GetById(userId, listId int) (todo.TodoList, error) {
 }
 
 func (r *TodoListMysql) Delete(userId, listId int) error {
-	query := fmt.Sprintf("DELETE FROM %s tl USING %s ul WHERE tl.id=ul.list_id and tl.id=%d and ul.user_id=%d", todoListsTable, usersListsTable, listId, userId)
+	query := fmt.Sprintf("DELETE FROM %s WHERE id=(SELECT list_id FROM %s WHERE user_id=%d AND list_id=%d)", todoListsTable, usersListsTable, userId, listId)
 	_, err := r.db.Exec(query)
 
+	query = fmt.Sprintf("DELETE FROM %s WHERE user_id=%d and list_id=%d", usersListsTable, userId, listId)
+	_, err = r.db.Exec(query)
+
+	return err
+}
+
+func (r *TodoListMysql) Update(userId, listId int, input todo.UpdateListInput) error {
+	setValues := make([]string, 0)
+
+	if input.Title != nil {
+		setValues = append(setValues, fmt.Sprintf("title='%s'", *input.Title))
+	}
+
+	if input.Description != nil {
+		setValues = append(setValues, fmt.Sprintf("description='%s'", *input.Description))
+	}
+
+	// title=$1
+	// description=$1
+	// title=$1, description=$2
+	setQuery := strings.Join(setValues, ", ")
+
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE id=(SELECT list_id FROM %s WHERE list_id=%d AND user_id=%d)",
+		todoListsTable, setQuery, usersListsTable, listId, userId)
+
+	_, err := r.db.Exec(query)
 	return err
 }
