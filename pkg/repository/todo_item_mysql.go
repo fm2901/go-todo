@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fm2901/go-todo"
 	"github.com/jmoiron/sqlx"
@@ -58,4 +59,50 @@ func (r *TodoItemMysql) GetAll(userId, listId int) ([]todo.TodoItem, error) {
 	}
 
 	return items, nil
+}
+
+func (r *TodoItemMysql) GetById(userId, itemId int) (todo.TodoItem, error) {
+	var item todo.TodoItem
+
+	query := fmt.Sprintf("SELECT ti.* FROM %s ti INNER JOIN %s li on li.item_id = ti.id_item INNER JOIN %s ul on ul.list_id = li.list_id WHERE ti.id = %d and ul.user_id = %d", todoItemsTable, listsItemsTable, usersListsTable, itemId, userId)
+
+	if err := r.db.Get(&item, query); err != nil {
+		return item, err
+	}
+
+	return item, nil
+}
+
+func (r *TodoItemMysql) Delete(userId, itemId int) error {
+	query := fmt.Sprintf("DELETE FROM %s WHERE id=%d", todoItemsTable, itemId)
+	_, err := r.db.Exec(query)
+
+	query = fmt.Sprintf("DELETE FROM %s WHERE user_id=%d and item_id=%d", listsItemsTable, userId, itemId)
+	_, err = r.db.Exec(query)
+
+	return err
+}
+
+func (r *TodoItemMysql) Update(userId, itemId int, input todo.UpdateItemInput) error {
+	setValues := make([]string, 0)
+
+	if input.Title != nil {
+		setValues = append(setValues, fmt.Sprintf("title='%s'", *input.Title))
+	}
+
+	if input.Description != nil {
+		setValues = append(setValues, fmt.Sprintf("description='%s'", *input.Description))
+	}
+
+	if input.Done != nil {
+		setValues = append(setValues, fmt.Sprintf("done='%s'", *input.Done))
+	}
+
+	setQuery := strings.Join(setValues, ", ")
+
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE id=%d)",
+		todoItemsTable, setQuery, itemId)
+
+	_, err := r.db.Exec(query)
+	return err
 }
